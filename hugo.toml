@@ -1,0 +1,6 @@
+baseURL = 'https://example.org/'
+languageCode = 'en-us'
+title = 'Porting PortableGL to RTEMS'
+params.description = 'This blog is dedicated to record all my fuckups while porting PortableGL to RTEMS. Thanks'
+params.author = 'Temirlan Emilbekov a.k.a PulpyPuppy'
+theme = 'terminal'
