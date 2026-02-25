@@ -1,9 +1,11 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://pulpypuppy.github.io'
 languageCode = 'en-us'
 title = 'Porting PortableGL to RTEMS'
-params.description = 'This blog is dedicated to record all my fuckups while porting PortableGL to RTEMS. Thanks'
-params.author = 'Temirlan Emilbekov a.k.a PulpyPuppy'
 theme = 'terminal'
+
+[params]
+  description = 'This blog is dedicated to record all my fuckups while porting PortableGL to RTEMS. Thanks'
+  author = 'Temirlan Emilbekov a.k.a PulpyPuppy'
 
 [caches]
   [caches.images]
