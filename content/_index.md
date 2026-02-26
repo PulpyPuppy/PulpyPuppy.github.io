@@ -19,8 +19,9 @@ Here I record all the fuckups, progress and thoughts I get while porting Portabl
 
 * **GitHub:** [@PulpyPuppy](https://github.com/PulpyPuppy)
 * **RTEMS Discourse:** [PulpyPuppy]
-- **Discord:** [CurveDoor]
+* **Discord:** [CurveDoor]
 * **Email:** `tamiramil@proton.me`
 
 ---
+
 >$ Terminal Is All You Need _
