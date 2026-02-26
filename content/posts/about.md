@@ -1,5 +1,6 @@
 ---
-author: "Temirlan Emilbekov a.k.a. PulpyPuppy"
+params:
+  author: "Temirlan Emilbekov a.k.a. PulpyPuppy"
 title: "About"
 date: "2026-02-26"
 ---
