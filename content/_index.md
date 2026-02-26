@@ -13,7 +13,7 @@ Hi! My name is Temirlan Emilbekov a.k.a. PulpyPuppy. I do some stuff. Mostly som
 ## Projects
 
 **[PortableGL On RTEMS](./portablegl):**
-Here I record all the fuckups, progress and thoughts I get while porting PortableGL graphic library to RTEMS.
+Here I record all the ✨misadventures✨, progress and thoughts I get while porting PortableGL graphic library to RTEMS.
 
 ## Contact & Links
 
