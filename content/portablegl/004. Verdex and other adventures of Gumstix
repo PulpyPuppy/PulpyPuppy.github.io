@@ -1,0 +1,201 @@
+---
+params:
+  author: |
+    Temirlan Emilbekov
+    aka PulpyPuppy
+    aka PuplyPuppy
+    aka Son of Dragon<sup>1</sup>
+  email: tamiramil@proton.me
+title: Verdex and other adventures of Gumstix
+date: 2026-04-04
+type: post
+---
+
+Hi a-a-all my fellas!
+
+Well, in this post we're going to talk about two things:
+1. Which BSPs have graphic output support;
+2. Which BSPs have been tested and what are the results.
+
+## Graphics Supporting BSPs
+
+Maybe, I should have told you about the decisions I've made in the GSoC proposal
+but... No, there is no but, I've simply forgot about that. So perhaps this is
+what the next post is going to be about.
+
+Let's get back to the first main topic. Obviously, all the i386 BSPs do have
+graphics output support. They even do have three interface implementations: VGA,
+Vesa and Cirrus.
+
+ARM is a little bit (no) messy. Firstly, raspberrypi BSPs do have the frame
+buffer driver implementation, of course. The gumstix implements the FB driver as
+well. The csb337 family has sed1356 controller driver with FB write
+functionality. The realview-pbx-a9 and lpc24xx BSPs implement arm-pl111
+controller driver. And... that's it I guess. If I'm wrong at some point,
+please mail me or (if this functionality is implemented at the moment you read
+this) you can leave here a comment.
+
+| Architecture | BSP Family      | Driver / Controller |
+|--------------|-----------------|---------------------|
+| i386         | pc386           | VGA, VESA, Cirrus   |
+| ARM          | Raspberry Pi    | Framebuffer         |
+| ARM          | Gumstix         | Framebuffer         |
+| ARM          | CSB337          | SED1356             |
+| ARM          | RealView PBX-A9 | PL111               |
+| ARM          | LPC24xx         | PL111               |
+
+## Testing Results
+
+Now, let's start the overview of the test results. I've been trying to build and
+run [the hello_triangle][hello_triangle] on different BSPs and see how and what
+they output.
+
+### Long story short
+
+All the six BSPs of pc386 family work fine (almost). ARM ones don't.
+
+### Longs story long
+
+Although all the pc386 BSPs work fine, the pc586-sse prints "FB_VEGA_RM using
+command line option "--video=" to select video mode" onto the emulated screen.
+I haven't investigated this yet, so if you have some considerations upon what
+it even is, welcome to comments.
+
+#### i386/pc386
+
+Here is the command which is used to run the executable:
+```
+$ qemu-system-i386 -m 128 -vga std 
+    -serial stdio \
+    -no-shutdown -no-reboot \
+    -append "--console=/dev/com1 --video=800x600-32" \
+    -kernel tests/hello_triangle/rtems7-i386-pc586-sse/hello_triangle.exe \
+```
+
+The config.ini fields:
+```
+RTEMS_POSIX_API = True
+BUILD_TESTS = True
+```
+
+#### Raspberry Pi & Raspberry Pi 2
+
+The hello_triangle doesn't work on raspberrypi and raspberrypi2 as expected.
+Nothing is outputed to be exact. Nor onto the emulated screen, nor in
+console.
+
+The fields set in config.ini for both rpi and rpi2:
+```
+RTEMS_POSIX_API = True
+BUILD_TESTS = True
+```
+
+Here is the command line invocation I have been using for raspberrypi:
+```
+$ qemu-system-arm -M raspi1ap -m 512 \
+    -serial stdio \
+    -kernel tests/hello_triangle/rtems7-arm-raspberrypi/hello_triangle.exe
+```
+
+For raspberrypi2:
+```
+$ qemu-system-arm -M raspi2b -m 1024 \
+    -serial stdio \
+    -kernel tests/hello_triangle/rtems7-arm-raspberrypi2/hello_triangle.exe
+```
+
+Things I've tried:
+- `-serial mon:stdio`
+- `-append "console=/dev/tty0"`
+- `-append "console=/dev/ttyS0"`
+- `-append "console=/dev/ttyAMA0"`
+- `BSP_START_COPY_FDT_FROM_U_BOOT = False`
+- `BSP_FDT_BLOB_COPY_TO_READ_ONLY_LOAD_AREA = False`
+
+The same behaviour with any of the above included: no output.
+
+#### Gumstix & Verdex/Connex
+
+Well, let's add a little bit of context in case someone except for Mr. Gedare
+reads my posts. Gumstix is a family of small ARM-based system boards older than
+the author. Actually, let's salute the Gumstix, the project has met its end on
+the last day of 2025.
+
+Now, about QEMU support. There is a 2012 article describing how to run Gumstix
+on QEMU, which mentions that Verdex and Connex are outdated and suggests using
+Overo instead. Overo is not present in QEMU 7.2, nor in QEMU 10.x. The article
+is from 2012, which means QEMU 1.x. Plot twist: it is not present in QEMU 1.x
+either. Maybe I do something wrong.
+
+So, Verdex and Connex it is.
+
+The command used to run the executable on Verdex:
+```
+$ dd if=/dev/zero of=flash.img bs=1M count=32
+$ qemu-system-arm -M verdex -m 128 \
+    -no-reboot -no-shutdown \
+    -pflash flash.img \
+    -device loader,file=hello_triangle.exe,cpu-num=0 \
+    -serial stdio \
+    -display sdl
+```
+
+Note the `-device loader` flag instead of `-kernel`. This is because `-kernel`
+on Verdex does not work as expected: QEMU starts executing from address
+`0x00000000`. The `-device loader` flag loads the executable properly and jumps
+to the entry point.
+
+The good news: the `fbskyeye` driver initializes successfully, the framebuffer
+opens, and ioctl returns correct screen dimensions (640x480). The bad news:
+there is no visible output. The FB driver implementation of Gumstix opens the FB
+with half-height. I don't know why yet and I don't know if this is the crux but
+nothings is drawn on the emulated screen. The screen is also invoked with
+half-height: 640x240 instead of 640x480.
+
+```
+WARNING: Image format was not specified for 'flash.img' and probing guessed raw.
+         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+         Specify the 'raw' format explicitly to remove the restrictions.
+FBSKYEYE -- driver initializing..
+
+
+*** HELLO TRIANGLE TEST ***
+FBSKYEYE open called.
+FBSKYEYE ioctl called, cmd=17920
+fbskyeye close called.
+*** END OF HELLO TRIANGLE TEST ***
+
+[ RTEMS shutdown ]
+RTEMS version: 7.0.0.b09bc60067efd921ee199f4241555151833d42d9
+RTEMS tools: 15.2.0 20250808 (RTEMS 7, Build 2026.03.04, RSB 00a71896204f95cb583e6271cad4c192b62cce6d, Newlib a7c61498)
+executing thread ID: 0x0a010001
+executing thread name: UI1
+```
+
+I also tried another approach with Connex:
+```
+$ dd if=/dev/zero of=flash.bin bs=4096 count=4096
+$ arm-rtems7-objcopy -O binary hello_triangle.exe hello_triangle.bin
+$ dd if=hello_triangle.bin of=flash.bin bs=4096 conv=notrunc
+$ qemu-system-arm -M connex \
+    -drive if=pflash,file=flash.bin,format=raw \
+    -no-reboot -no-shutdown \
+    -serial stdio
+```
+
+But this one doesn't work at all. I mean it runs, but nor graphic neither
+console output.
+
+According to the canons of the genre there was also a funny (no) debugging
+session involving `RTEMS_FATAL_SOURCE_INVALID_HEAP_FREE` which turned out to be
+caused by `#define PGL_ARGB32` telling PortableGL to use 32-bit pixels while the
+Gumstix framebuffer is 16BPP. I've wasted the whole day on this X(
+
+See ya.
+
+---
+
+1. If this sounds ridiculous, well, that's because it is, but you’ll just have
+to forgive me for that.
+
+[hello_triangle]: https://github.com/PulpyPuppy/portablegl-rtems-demo/tree/master/tests/hello_triangle
